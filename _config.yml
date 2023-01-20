@@ -23,8 +23,8 @@ author: Simon Tartakovsky
 # email: your-email@example.com
 description: >- # this means to ignore newlines until "baseurl:"
   Some combination of things I find interesting and techincal ramblings. Sometimes not mutually exclusive :)
-baseurl: "" # the subpath of your site, e.g. /blog
-url: "" # the base hostname & protocol for your site, e.g. http://example.com
+baseurl: "/blog" # the subpath of your site, e.g. /blog
+url: "https://merny93.github.io" # the base hostname & protocol for your site, e.g. http://example.com
 # twitter_username: jekyllrb
 # github_username:  jekyll
 
@@ -35,7 +35,7 @@ default_img: "/assets/img/question.png"
 theme: minima
 plugins:
   - jekyll-feed
-  - jekyll-google-photos
+  # - jekyll-google-photos
 
 # Exclude from processing.
 # The following items will not be processed, by default.
