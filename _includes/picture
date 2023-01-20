@@ -1,0 +1,1 @@
+<img src="{{site.baseurl}}{{site.default_img}}" onload="this.onload=null; this.src=googlePhotos.urls[ {{ include.content }} ];" />
