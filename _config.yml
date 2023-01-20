@@ -35,7 +35,6 @@ default_img: "/assets/img/question.png"
 theme: minima
 plugins:
   - jekyll-feed
-  # - jekyll-google-photos
 
 # Exclude from processing.
 # The following items will not be processed, by default.
