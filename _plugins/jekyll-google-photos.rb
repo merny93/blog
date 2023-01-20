@@ -20,9 +20,7 @@ module JekyllGooglePhotos
 
     
     def generate(site)
-      Jekyll.logger.info site.posts
       pages = site.posts.docs.select { |page| page["gallery_url"]}
-      Jekyll.logger.info pages
       for page in pages
           fullLinks = []
           imageLinks = getImageLinks(page["gallery_url"].strip)
