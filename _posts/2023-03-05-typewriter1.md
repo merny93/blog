@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Hacking a Typewriter"
-date:   "2023-02-11"
+date:   "2023-03-05"
 gallery_url: "https://photos.app.goo.gl/7uNdqAZitZZMHVu97"
 ---
 
