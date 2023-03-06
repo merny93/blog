@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.3.2">Jekyll</generator><link href="http://localhost:4000/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/blog/" rel="alternate" type="text/html" /><updated>2023-03-05T20:50:58-05:00</updated><id>http://localhost:4000/blog/feed.xml</id><title type="html">Simon’s Blog!</title><subtitle>Some combination of things I find interesting and techincal ramblings. Sometimes not mutually exclusive :)</subtitle><author><name>Simon Tartakovsky</name></author><entry><title type="html">Hacking a Typewriter</title><link href="http://localhost:4000/blog/2023/02/11/typewriter1.html" rel="alternate" type="text/html" title="Hacking a Typewriter" /><published>2023-02-11T00:00:00-05:00</published><updated>2023-02-11T00:00:00-05:00</updated><id>http://localhost:4000/blog/2023/02/11/typewriter1</id><content type="html" xml:base="http://localhost:4000/blog/2023/02/11/typewriter1.html"><![CDATA[<p>Ever wondered what the world would have looked like if large language models were invented before we invented monitors? Probably not but talking to chatGPT on a typewriter is cool regardless. A few weekends ago, Raffi and I hooked up a chatGPT backend to a hacked vintage typewriter: here is a quick demo video!</p>
+
+<iframe width="100%" height="400px" src="https://www.youtube.com/embed/Ow0xPYktSg0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen=""></iframe>
+
+<p>Getting to this point was a bit of a mission so lets go back to the start of the pandemic when I bought my first typewriter from the Quebec version of Craigslist as my first dumb Covid purchase. I had the idea to turn a typewriter into a printer and instead of doing any research I just went online and bought the first one which was within driving distance. It was advertised as “working 2 years ago, but lost power cable since. Sold as is”. My first reaction was <em>power cable</em>???</p>
+
+<p>Turns out typewriters come in three flavours:</p>
+<ul>
+  <li>Mechanical: What most people think when they picture a typewriter. All the force required to stamp a letter on the page comes from the finger hitting the key.</li>
+  <li>Electrical: Contain usually a single electric motor and a system of mechanical clutches and linkages which greatly reduce the actuation force of the keys.</li>
+  <li>Electronic: No mechanical linkage between the keys and the <a href="https://en.wikipedia.org/wiki/Sort_(typesetting)">type</a>. A micro-controller interfaces a keyboard of switches to some mechanical printing element.</li>
+</ul>
+
+<p>I had bought an electric typewriter which, would have been cool in the 40s, but was still way too mechanical to automate easily. Between its mechanical complexity and the handful of issues that were not advertised in the posting, it took me over a year to admit defeat and look elsewhere to achieve my goal.</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td><img src="https://lh3.googleusercontent.com/VhvCw17Q-Cxb9qnV9oEid2ZjIWEWwgqu_eyFxmjXiFVc-LB4USDWoQdc9HkIxJxS1NN3nY6l8asv5pSQSdwAPKBo49sVvAG79xOv-BtugV3MCir1jO_Cv9PjMth_fZMcJzcCNj90pg" alt="electirc typewriter" /></td>
+      <td><img src="https://lh3.googleusercontent.com/gSLFmdQOvgd3ZUve7gOCyVGcN7I6dz87RgdTICu-uG3w5ESNWHPXYJXe1zCtAZjGJmAi_VyiyB6nw_R-0OUCTgHlNCFIzfWBq8r4eEex8e-kejAiaRoSbtUBwKQlEoZtPhyilvFvZA" alt="electronic typewriter" /></td>
+    </tr>
+    <tr>
+      <td>Sears Celebrity electric typewriter I bought originally</td>
+      <td>Brother AX-25 electronic typewriter pictured with raspberry pi power cord and ethernet cord</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Enter the daisy-wheel typewriter: Brother AX-25, a fully electronic typewriter. This typewriter uses 3 stepper motors to move the carriage, advance the page, and rotate the typeface <a href="https://en.wikipedia.org/wiki/Daisy_wheel_printing"><em>daisy-wheel</em></a>. Since all printing is done via stepper motor, the brains of the operation is a PIC micro-controller which collects user input through a dome-switch keyboard. Having looked around the internet, I found that some people had managed to hack this style of typewriter to use it as an output device and others got it working as an input device. With some confidence that I could make this work I bought the typewriter which luckily arrived in “working condition”.</p>
+
+<p>I quickly took the thing apart and soldered parallel connections to the 17 wires (+1 ground) connecting the main PCB with the keyboard. Un-surprisingly the keyboard switches are multiplexed by the main board into 9 <em>rows</em> and 8 <em>columns</em> where the main micro-controller polls one row at a time and reads out the 8 columns on each polling cycle. The polling pulse is an entire 1ms: fast by <del>non-gamer</del> human standards but painfully slow by computer standards. This made me think that I can read input and write output to the typewriter without having to program an embedded system.</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td><img src="https://lh3.googleusercontent.com/CyWZiQ0Tm-72wlWs5DEm-5nMAXF5mjVwD1w9C_qdgTcuIZhiep9wDhYE11q-H_2fGcCyM5-QX_eG_lmF1q7Wb0Zpr9i5Wst6hVWpafMe2V2wjj_52_SHOAKEPXJRxCzAD9cJMsfZCQ" alt="typewriter circuit" /></td>
+    </tr>
+    <tr>
+      <td>Brain-board of the AX-25. The two ribbon cables at the bottom connect to the keyboard</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>A quick search of google shows that when running a ring oscillator on a raspberry-pi, one can achieve frequencies <a href="https://pub.pages.cba.mit.edu/ring/">above 1MHz</a>. The typewriter operates at only 1KHz which gives me a factor of 1000 margin. Even running python code might just be fast enough…</p>
+
+<p>I started my timing tests with a python script that would pull an output pin down when it detected a polling input. This resulted in a mean latency of 0.2ms but would occasionally be late by anything from 0.5ms to missing the pulse outright. The problem is that linux is not a real-time OS and therefore there is no promise that your process will not be set aside to let some other process finish up what it was doing. Playing with the <a href="https://en.wikipedia.org/wiki/Nice_(Unix)"><em>niceness</em></a> did not yield acceptable results either.</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td><img src="https://lh3.googleusercontent.com/lSB3d9tTr21Igb8kx2p4GEVPZaAO_6uHqWGvzOcAX4Tk0el4hPp9FqWyg7Ri_9GUqAYPaAbDUnqY5WljLk8p2LW4hmXwYz59CdW7z3X2CaATcee8VMBoMCaTndpMgPQb7ScO6lA95Q" alt="timming_diagram" /></td>
+    </tr>
+    <tr>
+      <td>Timing diagram with python script. Input pulse starts at -1ms. About 1 minute integration time</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>To get near real-time performance out of linux you have to use a much more primitive programming language like <em>C</em> and adjust the job scheduler to always give you priority. The article <a href="https://www.iot-programmer.com/index.php/books/22-raspberry-pi-and-the-iot-in-c/chapters-raspberry-pi-and-the-iot-in-c/33-raspberry-pi-iot-in-c-almost-realtime-linux">Almost Realtime Linux</a> was my main resource for this and it worked great!</p>
+
+<p>Switching to <em>C</em> and adjusting the scheduler to keep my thread on highest priority resulted in less than 0.1ms latency with no glitches or missed pulses at all! Finally wrapping the whole thing in python means that I get to avoid the <del>annoyances</del> quirks of <em>C</em> when connecting it to some web backend like chatGPT. At this point I had effectively re-invented the teletype, and it was ready to do some fun stuff!</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td><img src="https://lh3.googleusercontent.com/GrQN28rZ5-1_iBc6w3xsH1AEk8z-Su4P3a08tByEY_vuKji5lq68HPJi0zk1wdtW1D98d2KwvBEkSkfL5HsTbaLw0_YBJ5YvI8QXaYnE7uwGDedhovKLU32ozPB0IojNjB_qoTtA_g" alt="asci_cow" /></td>
+      <td><img src="https://lh3.googleusercontent.com/lJVT_YPBxzqeEARH0zPxVP2uaI135TdgUHylL-BR7e8eVEGREBVbYNYJzKyO7zNz7OBjeUSIOhF4mOg6yAvs4a2dkqDAKAbdBqKh0980DCUPeJCVDFdmTGoSScvWr8o-KMKiDuMJSg" alt="asci_fox" /></td>
+    </tr>
+    <tr>
+      <td>Demo of the default cowsay ubuntu utility</td>
+      <td>cowsay with –fox switch</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Getting the embedded-_like_ code to work took a few weeks but I was hoping to get it working by the time Raffi came to visit me. The original idea was to turn the thing into an email server because I had enjoyed typing letters on the typewriter in the past but found the whole mailing delay annoying. Connecting it to email would let me send and receive type-written letters but with much less delay. However, leading up to this weekend Alev suggested that we connect the typewriter to chatGPT to be able to have full conversations with a computer all on a piece of paper.</p>
+
+<p>In comparison to getting to this point, this turned out to be really easy! We used the <a href="https://github.com/acheong08/ChatGPT">unofficial API</a> since when we integrated this openAI had yet to release the official thing.</p>
+
+<p>The final touches were to append “answer in 30 words or less” to all prompts and we were off to the races (turns out chatGPT is really chatty and typewriter ribbons are not infinite).</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td><img src="https://lh3.googleusercontent.com/vCP8-Nk38kEIfKZSbxAo5b4E3Fed0rXc8dfxCoIhge8Xvj1gfz0Xq7hv9_NBlFTEpXFuWummrpI-D0aWw8qfIF_P91Z-D--2Mx8Ds6gzfkyPwGsRKj7rnWh4yNPJjrImB5UpY2qG2Q" alt="asci_panther" /></td>
+      <td><img src="https://lh3.googleusercontent.com/pixaKtGjDE8v26oyFINJxZ5dsBqocZm3YTnf56hIOC-vlynLD-lCaxfBrlhQ0ftvfmnio09NSw6YlayERXvebNnmbyB79SIllYE64MzoUO18Ag6j75oPyY-pxQj-XpzRgFJ38vhhZw" alt="poetry" /></td>
+    </tr>
+    <tr>
+      <td>ASCII art from the internet</td>
+      <td>Some poetry demo with chatGPT</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The project has since been put on the back-burner for now. I might get the motivation to connect it to an email server eventually but that might require me to re-write a portion of the input code. The current setup is synchronous and thus the read operations happen in blocks (about 20ms per block). This usually works perfectly fine but if you are typing very fast (hitting two keys within a 20ms window) my code can get confused and miss one of the inputs. The fix here is to run a <em>C</em> daemon and pipe output live to another thread which deals with the inputs. Although my love for <em>C</em> makes me reluctant to change things up.</p>
+
+<p>If anyone made it this far and is still reading, all the code is on <a href="https://github.com/merny93/typewriter">GitHub</a>.</p>
+
+<!-- The typewriter I had bought was an electrical one, and turns out it had way more problems than just the missing power cable. Within a day of buying the thing I replaced the Sears proprietary mains power receptacle with a standard [kettle cord](https://en.wikipedia.org/wiki/IEC_60320#C15/C16_coupler) one. To the sweet old ladies credit, the machine did turn on and even typed a couple characters at which point I noticed the key called _power return_ and of course had to press it! The carriage did as requested: advanced the paper one line spacing and then wound itself to the left margin, at which point the _power_ disengaged and the spring which advances the carriage one character at a time fully unwound slamming the carriage into the right margin in the process. -->
+
+<!-- The mechanism which advances the carriage is based upon an [anchor escapement](https://en.wikipedia.org/wiki/Anchor_escapement) allowing the carriage to advance and retard a consistent spacing for each character. To implement power return (and repeated spacing) the anchor of the escapement is separated into two parts which are spring loaded to the nominal position. During the _power return_ the anchor disengages the escape wheel while a motor winds the carriage back, once the carriage reaches the end-stop it disengages the motor and re-engages the anchor. In my case, over the machines life, the spring which engages the anchor loosened and the join in the anchor stiffened resulting in slightly slower engagement time. The end result was that the escapement would unwind the entire way after the _power return_ motor disengaged. Indeed the fix was just to take apparat the escapement mechanism, wash and grease it, and replace the tired spring. -->
+
+<!-- Other problems included a shift key which did nothing (caused by a missing linkage and fixed by making a linkage out of steel wire) and a broken backspace key (caused by a missing screw and bushing and fixed by machining a brass bushing and replacing the screw). -->
+
+<!-- To automate the typewriter I had originally planned to add ~30 solenoids (one for each key) and actuate which ever one I needed! This turned out to not be realistic as even though the typewriter was electric, the force required to overcome the springs in the keys required a fairly large solenoid. Short of winding my own solenoids designed for very high voltage low duty cycle I decided to abandon that plan. The next plan was to actuate all the keys with a single solenoid mounted on a linear stage in a place where all inputs align together. This was certainly possible but it would still require some shenanigans to actuate special keys (like shift, space and others...) so I tabled that idea for some time. I really did not have it in me to work with microscopic linkages as everything in that typewriter was so compact. -->]]></content><author><name>Simon Tartakovsky</name></author><summary type="html"><![CDATA[Ever wondered what the world would have looked like if large language models were invented before we invented monitors? Probably not but talking to chatGPT on a typewriter is cool regardless. A few weekends ago, Raffi and I hooked up a chatGPT backend to a hacked vintage typewriter: here is a quick demo video! Getting to this point was a bit of a mission so lets go back to the start of the pandemic when I bought my first typewriter from the Quebec version of Craigslist as my first dumb Covid purchase. I had the idea to turn a typewriter into a printer and instead of doing any research I just went online and bought the first one which was within driving distance. It was advertised as “working 2 years ago, but lost power cable since. Sold as is”. My first reaction was power cable??? Turns out typewriters come in three flavours: Mechanical: What most people think when they picture a typewriter. All the force required to stamp a letter on the page comes from the finger hitting the key. Electrical: Contain usually a single electric motor and a system of mechanical clutches and linkages which greatly reduce the actuation force of the keys. Electronic: No mechanical linkage between the keys and the type. A micro-controller interfaces a keyboard of switches to some mechanical printing element. I had bought an electric typewriter which, would have been cool in the 40s, but was still way too mechanical to automate easily. Between its mechanical complexity and the handful of issues that were not advertised in the posting, it took me over a year to admit defeat and look elsewhere to achieve my goal. Sears Celebrity electric typewriter I bought originally Brother AX-25 electronic typewriter pictured with raspberry pi power cord and ethernet cord Enter the daisy-wheel typewriter: Brother AX-25, a fully electronic typewriter. This typewriter uses 3 stepper motors to move the carriage, advance the page, and rotate the typeface daisy-wheel. Since all printing is done via stepper motor, the brains of the operation is a PIC micro-controller which collects user input through a dome-switch keyboard. Having looked around the internet, I found that some people had managed to hack this style of typewriter to use it as an output device and others got it working as an input device. With some confidence that I could make this work I bought the typewriter which luckily arrived in “working condition”. I quickly took the thing apart and soldered parallel connections to the 17 wires (+1 ground) connecting the main PCB with the keyboard. Un-surprisingly the keyboard switches are multiplexed by the main board into 9 rows and 8 columns where the main micro-controller polls one row at a time and reads out the 8 columns on each polling cycle. The polling pulse is an entire 1ms: fast by non-gamer human standards but painfully slow by computer standards. This made me think that I can read input and write output to the typewriter without having to program an embedded system. Brain-board of the AX-25. The two ribbon cables at the bottom connect to the keyboard A quick search of google shows that when running a ring oscillator on a raspberry-pi, one can achieve frequencies above 1MHz. The typewriter operates at only 1KHz which gives me a factor of 1000 margin. Even running python code might just be fast enough… I started my timing tests with a python script that would pull an output pin down when it detected a polling input. This resulted in a mean latency of 0.2ms but would occasionally be late by anything from 0.5ms to missing the pulse outright. The problem is that linux is not a real-time OS and therefore there is no promise that your process will not be set aside to let some other process finish up what it was doing. Playing with the niceness did not yield acceptable results either. Timing diagram with python script. Input pulse starts at -1ms. About 1 minute integration time To get near real-time performance out of linux you have to use a much more primitive programming language like C and adjust the job scheduler to always give you priority. The article Almost Realtime Linux was my main resource for this and it worked great! Switching to C and adjusting the scheduler to keep my thread on highest priority resulted in less than 0.1ms latency with no glitches or missed pulses at all! Finally wrapping the whole thing in python means that I get to avoid the annoyances quirks of C when connecting it to some web backend like chatGPT. At this point I had effectively re-invented the teletype, and it was ready to do some fun stuff! Demo of the default cowsay ubuntu utility cowsay with –fox switch Getting the embedded-_like_ code to work took a few weeks but I was hoping to get it working by the time Raffi came to visit me. The original idea was to turn the thing into an email server because I had enjoyed typing letters on the typewriter in the past but found the whole mailing delay annoying. Connecting it to email would let me send and receive type-written letters but with much less delay. However, leading up to this weekend Alev suggested that we connect the typewriter to chatGPT to be able to have full conversations with a computer all on a piece of paper. In comparison to getting to this point, this turned out to be really easy! We used the unofficial API since when we integrated this openAI had yet to release the official thing. The final touches were to append “answer in 30 words or less” to all prompts and we were off to the races (turns out chatGPT is really chatty and typewriter ribbons are not infinite). ASCII art from the internet Some poetry demo with chatGPT The project has since been put on the back-burner for now. I might get the motivation to connect it to an email server eventually but that might require me to re-write a portion of the input code. The current setup is synchronous and thus the read operations happen in blocks (about 20ms per block). This usually works perfectly fine but if you are typing very fast (hitting two keys within a 20ms window) my code can get confused and miss one of the inputs. The fix here is to run a C daemon and pipe output live to another thread which deals with the inputs. Although my love for C makes me reluctant to change things up. If anyone made it this far and is still reading, all the code is on GitHub.]]></summary></entry><entry><title type="html">Antarctica in Film</title><link href="http://localhost:4000/blog/2023/01/25/antarctica-in-film.html" rel="alternate" type="text/html" title="Antarctica in Film" /><published>2023-01-25T00:00:00-05:00</published><updated>2023-01-25T00:00:00-05:00</updated><id>http://localhost:4000/blog/2023/01/25/antarctica-in-film</id><content type="html" xml:base="http://localhost:4000/blog/2023/01/25/antarctica-in-film.html"><![CDATA[<p>As most of my friends already know, I recently traveled to Antarctica for a few months to prepare and launch the Spider 2 instrument.</p>
+
+<p><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/8lF1F2xRLSBoXoDa3cZN_Z9SYR_H2c5Z8-lk6D6jTMIMmoV2GHQr7pqe9ECTPYITCUrY_8hNdNKIfvV63vAUVRIS2HGzGr-sqrZSh80uIuCNQ1jjHhnpLR3MSYSF4qrMz6Km0yrnWA" alt="Spider on the pad" /></a></p>
+
+<p>Spider 2 is a CMB polarimeter which flies on a stratospheric weather balloon at about 30km above the ground. It is designed to fly for around 30 days during which it scans a small portion of the sky that is specially designed to be <em>boring</em>. For Spider to achieve it’s science goals it needs to be able to see the earliest light in the universe and thus the patch of sky to be scanned is selected to avoid our own galaxy and any other bright sources (notably the sun).</p>
+
+<p>To measure the faint emission of the CMB, Spider has 6 individual telescopes which operate using Transition Edge Sensors (TES) on the focal planes. These TESs are effectively little bits of superconducting material which are carefully temperature controlled to stay right on the edge of superconductivity. This ballance is so delicate that even if a single photon lands on the TES it will deposit enough energy to knock it off the edge and the TES will noticeably heat up. TESs make for very sensitive detectors but they come with a lot of difficulties.</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/zuqNiGyuELgvClghKjMCgu1siPRTT1ax5fJFbAcTzqjBAWXNAANGWQ2XDJMMw4E0GA1F3APB4D6OGjLOQhFPKVmqJoJ0ML02yh5Y6ZyRyAB_EP1hdrfbl7cH7KLy_rT7tG5MtN--5Q" alt="inserts group photo" /></a></td>
+    </tr>
+    <tr>
+      <td>Elle, Jared and Susan posing with the telescope inserts with Vy and Steven caught in the background</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>To get TESs <em>on transition</em> they need to be cooled down to near absolute zero. A ground based experiment might achieve this with a pulse-tube and dilution refrigerator combo but the mass and power constraints associated with balloon flights prohibit such a solution. Instead, Spider uses a 1000L bath of liquid helium to cool the system to a temperature of 4.2K and then a combination of a <em>pumped</em> He4 and He3 system to cool the focal planes down to 0.3K</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/qgIYNMW4KzbjiibFDNEFW_C1KeGEtuAzBxClWPjH8xVmmoC_UI-zk1LoupUBNY0ctB2R8nZw-C-MbpcQcbVqxDeobZi-tgx8Ar-82bRdLRE5zvH7K-LZc8PkCi6bXfogB8CARuFIMg" alt="Loading inserts" /></a></td>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/5xxjPN6Q3b_CTdyN0P9xeIEyKW02CVou3He3-b0yWeytTdbNhsnD8FryglU2B6k73GHEyU9_aDxngR8VyTU-54EKG1BNtW4P_E2RKrOkFlZFFfg2atmBOGbzQ6-tmYPrkW9xz77bGA" alt="vertical inserts" /></a></td>
+    </tr>
+    <tr>
+      <td>Corwin, Suren and Elle loading a telescope insert into the main cryostat</td>
+      <td>Jared, Elle and Sho posing with the inserts</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>So why Antarctica? There are two main reasons: constant day and ease of recovery.</p>
+
+<p>The balloons that are used to lift these large payloads are not sealed at the bottom. Since as the balloon rises the ambient pressure drops, the balloon inflates significantly between the time it is launched and when it reaches float. If the balloon was sealed it would be very easy to over-fill the balloon and have it pop at some point during ascent. To avoid this, the balloons are open at the bottom but this does not cause them to leak since the helium inside them stays at the top. However, if the balloon experienced day-night cycles it would heat during the day and cool at night which would intern rise and drop the internal pressure. With each such cycle it would <em>squeeze</em> some helium out the bottom and thus every day the balloon would drop lower and lower. During the summer months, Antarctica experiences 24 hour sunlight, this makes the balloon stable and the solar panels that power the instrument efficient!</p>
+
+<p>The second reason is that the instrument does not have enough bandwidth to downlink all observation data. To retrieve the data we have to physically grab hard-drives from the payload. There is also lots of high value equipment that can be reused. The wind patterns that set up over Antarctica usually keep stratospheric balloons over land and so, whenever it is time to terminate, we can be sure that the payload will not sink at sea.</p>
+
+<p>I decided to bring my dad’s old Soviet film camera, the Zenith from 1972 and take a hand-full of pictures. Most turned out ok so here is a stroll through them:</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/jBWCS-jVxbJ8UFMC86Y4B5GQkonRXDPBB7L0YkOshuMtdTceqvV3ys9LUPBI_dbdxoWuv_8iJP1xwwWfJ3OSokFGYBF4aoaaLNlv6094uiWfGRg_soAP-JT2ayBhOtBDZcwSFtJYMQ" alt="Mount Erebus" /></a></td>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/3U-No6xeY8CvGAjJXKuewJZ23Xo2MWNRfOsiPjno5Ltr3UHULErKG6uAZ-RCqNS5RnwEnX6m1gWPf2KjSzFkBWADp0uxUGvL40hTq_-xrgium2JDmN3wp6A6rAkxZY1-PsmitPV4cQ" alt="bulldozer" /></a></td>
+    </tr>
+    <tr>
+      <td>Mount Erebus from Lond Duration Ballooning (LDB)</td>
+      <td>An ancient piece of equipment that I did not get to drive</td>
+    </tr>
+    <tr>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/O88yhvKZPbZU-WQncTmdH1QD2mXDXkz7UxmQRhfCxgaFe9Sgig7H3rfAzVZQWv4wDW02U3l4fa2VXVy4aj3SIEogjpX-6i695RMKtXjrgR7yz4f_Ggix_5zSOBkUs76hAEIqbxs0KQ" alt="church" /></a></td>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/DwFzN-E2LMlA3BBaHxOD-4C_Daxd70gDlEK6VULSxv-7w5ma8wObq2jzqsAml3WjmhE2LqPEwbTF13Cw8SNoI-w9krGQSYMEJnTY07RwPQZgoG5ErkeF0bvriPEfdZC3JLlUoikd1A" alt="LDB town" /></a></td>
+    </tr>
+    <tr>
+      <td>The church in town</td>
+      <td>LDB after a small wind storm</td>
+    </tr>
+    <tr>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/XHkAVnR3-WfhKVyUpVyXQ7cgdQDKCSIfrYq-Ke4WLZrUNnxK-MKBKaGQaFGoHXWm7QdtbVZBKs6TWtqbJ500SvvU4DO4PszEZUuubT88SQ6-WLlhU0_VjboKuok2ZVoraWNBrMfhHA" alt="Scott's Hut" /></a></td>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/Vdoy5MR0ycJWkNniP5IEmQCIG11Aqt6prkSgaT8dyNJqrmv4JJcZJbfqxTy-lBDIxUc81_FlpOMjhoYbzPUOebxKSe9EaJe2EUpoqK6UbXcVXEKXNWpPiJp-8LVSMabFSfnHVVQ4hQ" alt="pressure ridges" /></a></td>
+    </tr>
+    <tr>
+      <td>Scott’s hut from town</td>
+      <td>View of the pressure ridges on our way to work</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Assembling Spider to get it launch ready takes a long time and lots of patience. Antarctica also does not have Amazon Prime which means that anything that breaks needs to be fixed with whatever you have on hand. When we did have a day off, and the weather was co-operating, we would do outdoorsy activities. At the start of the season the sea ice was thick enough to let people ski on it:</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/808-AnboUgBSp46C-4j94ILa6z45GrcBfiKsUZuka-gKa3oKlZ7sVq2D0HP8AvMo0VfT9Tn8NCch-XDqQGThRkVATW1_GZSI1HHH7u-wL8eRqifAqsJ0CB8I5z2yYC52bhCi-OrYZA" alt="skiing from far" /></a></td>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/U4-etVEOmS1vmF8pqZ_1QcXXNrwLtEdO0spfhTqSi4H-7Z1DH-YCVgIYRQdv4ZCqk6oBCqf1019Zl4h4G0XLRlQ9IVjiGvRHSNNl_jRZeJ4a5XkbxC5m0WQ0cHD_OfUT8ajTBor3QQ" alt="ski group" /></a></td>
+    </tr>
+    <tr>
+      <td>Susan, Elle, and Steven in front of McMurdo</td>
+      <td>Susan, Elle, and Steven up close</td>
+    </tr>
+    <tr>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/lUKLF8FKfkdlLCtlMeYW_dLbfMZxTr09Ku8w2a1PQVKBc0IJp1UB_ruR28l5MUfG1LsaZSYxN3sc7Lxrfkb7M724E-KWacVaOo3JCsRs8fKQhjcKM6n6V-rzartLm9-AfA-BMmYjdQ" alt="Susan and vy" /></a></td>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/GdrcWHoi62E8zYKuEsMsq-YGCaInhvZlNhTAP1zHHtorLuzQsQ4rjQ_1KHR6A6vSk8emfDnpFckyhKyxrROJaTU3wmVZe-E-M0id_ELpnaa9QXK2aNsAQ64Ae0KKTLLv8WDU6TZMfg" alt="vy and bikes" /></a></td>
+    </tr>
+    <tr>
+      <td>Susan and Vy showing off the rented skis</td>
+      <td>Vy adding a splash of color to the backdrop</td>
+    </tr>
+    <tr>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/-J7MKcmnlMeJEfZh2moNw8fWF58afvaiVv1VBtSwd6zUthyFLIWAfegAJ-nddMTZI5Az6l0G6U9-1VKFONzIx99phdpb5vzwZIQSqkzc6uj3INJK540xQKK_kuADxGl53mZ6XMXOfA" alt="happy susan" /></a></td>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/IxIm6PQ1E1r3JUckEuPj-w5AJ6dDjsQzucYhLYskdpuAxX3oZRXBtg3LTXxDc9ZxX_CsTSztTTvmwbWxUSYKlQTdyjqkq_I7cH8IMYqJ593O4gZmjHBVjgeq5hXnU6E4aw26s5WC_g" alt="susan seal" /></a></td>
+    </tr>
+    <tr>
+      <td>Susan celebrating the end of the hike</td>
+      <td>Susan posing with the local wild-life</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>At the end of December we were launch ready. We had about a week’s worth of launch attempts before we finally sent Spider on it’s way. Launching is heavily weather dependant and the weather would usually be best at 7am local time. To be ready to launch at 7am we would usually show up around midnight that morning. After a few hours of work to get everything ready, Spider would be taken out of the high-bay and would dangle majestically from the launch vehicle named “The Boss”. At this point we would sit around launching pie-balls (the small red weather balloons) to asses the weather until it was either good enough to launch or at around 10am when we would call it for the day and try again tomorrow.</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/vhyUtCfF8OZURnLAWiqexHPx8Ue1gMap-buklQpJdoABXU8gYCPWjKY_kPZmT7wECALmH2eZ-WEn8k8mGltD_ECjZxR5KL2sqnvYZrZg8azuT_JqKrM0TJu0eZ71oNfCawu9Y0nfLg" alt="spider outside" /></a></td>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/cEIgHbn6GoQp9ZmPHWvbWBASpzsC6IJu3RxrNxFdKnSyY8THEepEaLR-iCjOAOOB7iGiKrYgjHh8hPpllZ3PlbEspDerZ1UKTz8CblKr4tC0wiTkaUF2HumR1MMjlSN_rvhQdHxOgw" alt="spider on the pad" /></a></td>
+    </tr>
+    <tr>
+      <td>Spider hanging out on the Boss</td>
+      <td>Spider sitting on the pad waiting for launch</td>
+    </tr>
+    <tr>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/JLxEd1pcXFgI9GtJFpjcKQlcTSvoe3UXQ69_BqPiXgxJeDkphXl4vQqFgAfSNbx8VWXbJMw3dCTJVE0AQKgbecKYR6keSWdJV8lyDOYHHj9jKsFxiouIDzi16RcgHYo2b89g8vGXfQ" alt="balloon in the air" /></a></td>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/OASP72jv8y4mtcUdleqyrcrh3buHNZ2jIz9ZlB3GTb_jdtUPTjU7KFjmsKJG6I79JjG4q-HPvb39FzOs-_2pu1EmjXWrc6rTCbOMxixXxjzg3_PhMEUKlNeWosprqCBkE1RvdImwFg" alt="pi ball" /></a></td>
+    </tr>
+    <tr>
+      <td>Seconds before launch</td>
+      <td>Jared and Rose launching a weather balloon</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>As always, most of the pictures I took were portraits!</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/_PQBQwIUq1bue63HpXjGe7ZA7y4dUoocO9OpTJpkKodGJIYDSdCiih4eWWODCY7f5cnR7DLJcRTGVoTqy_N2xm_nj3VxzxDTP_wGncqcXMD8vcsZ7MTlkJsxMpVLE7K2LBtqdUwT_A" alt="alt text" /></a></td>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/rUVwSVpMUwJ_MhZ14IkDtPzf-MD277GcL8yBg-C7eAtYNXgtyq_JXkk4iuFEAYS1m8texBtN_ppbu3O9WjO-clQdlUZsAtF8zQBusEICINnZjp05tt_6JZ-aSHxcLb1Fk66DwEvCmQ" alt="more alt text" /></a></td>
+    </tr>
+    <tr>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/ZIvvB2RUdI_eq7B7qSn-z7PSidn3UG_CodrnXxgtrIpJx59OmQSo23pNIBi_p1HKRl4ywQZnQ6nKRXfLpteGu5pfV6xbzt2HsH8q7Aqdpjb3rpdQFHll1uHGRfFJaP0ipWrL9TQpFw" alt="alt text" /></a></td>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/3aA3ufyv2zmVmgA8WQK5tOGfRVPu1ZOBNtXnWlaVsS_hUQ6lSwPT3SHXQN340umMqwhgMmVEeXeNRFJsTFL7ZkL_yaLRq2X3BBGK9nwmNyg4D30Kqp7XSAcXrBMLeHQgytA5EmLNnA" alt="more alt text" /></a></td>
+    </tr>
+    <tr>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/Ygk3242KK0S-c7IpF_WuL367SQAgq_Y_xd_G-DGOcAUnXdRsfhqWUvQ-Ve7Jp56i5jWKepiwZ7RCr9QRax9nCqlKKeoKYJsbUWPZUxadgscST-P4kQoAEhnscQKRkOhYsPQJzXBDgw" alt="alt text" /></a></td>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/RK6di2U0RgSGWw9XnecZjk3WYtGINoYNV2d0AgNtgYgGxAgJJdqf6EpeEnbVTQzofw7gF6wrNVxZzzyUWUeg75niiA85wxaIDY5A9UQDps_NggX9VUaO0wa1CBYaT4-kfQrw6UfuxA" alt="more alt text" /></a></td>
+    </tr>
+    <tr>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/v6pCpghaFi07MCGkCx6GinoWneQlYHamWvMWxmGpsnr5Ikfh6elGDrcD91mEYhwRsAGkRed0ylQus0qvCycHFZg-zVrZIZV5uzD7rDYXNXXMX3tVUTQoAMuqODe7srRtS_QeU0nz9g" alt="alt text" /></a></td>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/XjdyUBCY-sB7UWTLJO0Jsqnp7M3sPDb7VW6M8HU6WRzNWehY6Vai4mjpjEYJLRJv6ysrD2lLT30jwVnWJ3-bcusDFcvtZi8fXm6RzsftIXCLBZtCbMawcw31w2mvR8s2n25K6QQziw" alt="more alt text" /></a></td>
+    </tr>
+    <tr>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/nJIQfExZ4q83ImO_1IxTPDi_sprBEybyGBKHg6_L_Im9DppL1wwhRB0ABgJ3lIK_TC2g9M7WACTQ4Uu-HGLNoHRk5dILM54yfonELGXNbrk77MwMtOa6ogBRqp7owo40yqKgDrPnSA" alt="alt text" /></a></td>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/yBIkU4MWKm2WOzuCAcWuDzNByxSu5i_mI8rE4kZdQ3VJ7nZ8BjqMw5Qjn5fAivGMnWrijvzsLt6eyTRnWDqjTKzLQ_0J30HA2HgjmoluTUNsDziZqv_zZwZZbZ8b5EBTd6TWHWRisg" alt="more alt text" /></a></td>
+    </tr>
+    <tr>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/KZ18hldJH6o9cEMjW9l5J3vtX01NjTTw3ssnXE7L8k3DbkXH3cg1W1jzkhsRF0X-cTzbge5idNq7vXZVarb_COhxJf2rjk1Gsu-8r2CZT5woEVExBFddeAJ0WB24ma7qWqdEHsKVXg" alt="alt text" /></a></td>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/d3FGauuZhnQ-Twl0Ibr7w-Jd1Sf4POedTsqwQ9h0w8hh4HVTpdMg61nkuVvT2ioGMhTEW5cERzRtrEq6YNwmQ6p3TK6mPTwqLnkbEWZpEdR8DYzWEkEr87XOtZHYlzIKZLpyJhBijA" alt="more alt text" /></a></td>
+    </tr>
+    <tr>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/5cDOjNk2LUX11Tk-Tjt57DzRUQj5QvisUWbP4opIGApDJOk1hhvT7Baa6hpLY_sVJEl5YyVS9hiKeEc7Hgb6C9HtvR9zq2CqeuhsaVcl5ASGgPRnUwWnMaRqWGNQpkN7xvYw2qabxw" alt="alt text" /></a></td>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/Y3_ZVPOVACEEcx6FPHdQBAQsMGfLSuOmB2r19viqR0PrUkXWQn-KabPJ2rtKaJhFJivK3jjGZRoCg2uqwbSh9HpCjBnu480el4L9_8WoGtIIu9aF_lcxTn-uFG39jX-4Vf4LSgrWjw" alt="more alt text" /></a></td>
+    </tr>
+    <tr>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/WA3nnY1yoIvIECRwPli-iGH7DPGpEcKJuZgmFdyfcDihWHsFM9JsfBCdMszm35e1OQBoY8CwIa7PK-f7IijTWbnmuSO5VFlUkHleAkM4PMdGaiXydXMU-k15AGJc_TqhQI5pz0zB5w" alt="alt text" /></a></td>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/Oe76LHoJqPJJJd_uOAwIIjunUEzKc8CxvaSBuOhLms1Cv7NluwMv5XLIdeuXEWHoclJHDJ6txcU7bNKcUGD5LxG9jGgLCDeCdeCh6Yx9S5XMeST6nAroQLYpoXgFC_oEiqrvtTk2Sg" alt="more alt text" /></a></td>
+    </tr>
+    <tr>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/3Ib33B3PrAkmb4453_aKoaCKqLt5DC8k2MoGl9zfQ9fH0HcYNtpjeyYhEwu8SpLy_cOX12e4gTTY1eCPZisn55R42oVcywJxGkh7nM1t86IIvpkK6eadNnNZCRnbmdRtq0U2UfnftQ" alt="alt text" /></a></td>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/lxVwY8dtmvuyTwEbgZ1K2ZK6CwLdEV4acjr4n0fRCdzJF2tVbFCCj8Z7ZDJDcs74OMRMVpJ9nKsu_J_EsZIopD3taZEFNSUIatsTeVLyXvzNCiO0hNrUqd0C3nulxMvAcZbZqnyoRQ" alt="more alt text" /></a></td>
+    </tr>
+    <tr>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/fxpO9n5T9oPdf4ajBDaaw9QxflIqGcwRvECzpBvxOAdBsZiPwjCv1lMrvKcbz8bsyBvzdbwEZQQzJjjnsmfCn5biCErKdqHrN1lYv7x73vJHP0U4RZpwP95ciutnVafkxzjAUthl9g" alt="alt text" /></a></td>
+      <td><a href="https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"><img src="https://lh3.googleusercontent.com/1q7QvOtgDdiMHS-crOyAAgme996FjN8ekaaL8e7ug4DLJqwqTY-1YIeK-ZOD12F_TsBEVDYAzYuOC-WKeTmbAaLEGK8gcM_EGiN5NcQamj-wFs-9V8RVgTsHuMNbsF7cQCna5_aHDQ" alt="more alt text" /></a></td>
+    </tr>
+  </tbody>
+</table>]]></content><author><name>Simon Tartakovsky</name></author><summary type="html"><![CDATA[As most of my friends already know, I recently traveled to Antarctica for a few months to prepare and launch the Spider 2 instrument. Spider 2 is a CMB polarimeter which flies on a stratospheric weather balloon at about 30km above the ground. It is designed to fly for around 30 days during which it scans a small portion of the sky that is specially designed to be boring. For Spider to achieve it’s science goals it needs to be able to see the earliest light in the universe and thus the patch of sky to be scanned is selected to avoid our own galaxy and any other bright sources (notably the sun). To measure the faint emission of the CMB, Spider has 6 individual telescopes which operate using Transition Edge Sensors (TES) on the focal planes. These TESs are effectively little bits of superconducting material which are carefully temperature controlled to stay right on the edge of superconductivity. This ballance is so delicate that even if a single photon lands on the TES it will deposit enough energy to knock it off the edge and the TES will noticeably heat up. TESs make for very sensitive detectors but they come with a lot of difficulties. Elle, Jared and Susan posing with the telescope inserts with Vy and Steven caught in the background To get TESs on transition they need to be cooled down to near absolute zero. A ground based experiment might achieve this with a pulse-tube and dilution refrigerator combo but the mass and power constraints associated with balloon flights prohibit such a solution. Instead, Spider uses a 1000L bath of liquid helium to cool the system to a temperature of 4.2K and then a combination of a pumped He4 and He3 system to cool the focal planes down to 0.3K Corwin, Suren and Elle loading a telescope insert into the main cryostat Jared, Elle and Sho posing with the inserts So why Antarctica? There are two main reasons: constant day and ease of recovery. The balloons that are used to lift these large payloads are not sealed at the bottom. Since as the balloon rises the ambient pressure drops, the balloon inflates significantly between the time it is launched and when it reaches float. If the balloon was sealed it would be very easy to over-fill the balloon and have it pop at some point during ascent. To avoid this, the balloons are open at the bottom but this does not cause them to leak since the helium inside them stays at the top. However, if the balloon experienced day-night cycles it would heat during the day and cool at night which would intern rise and drop the internal pressure. With each such cycle it would squeeze some helium out the bottom and thus every day the balloon would drop lower and lower. During the summer months, Antarctica experiences 24 hour sunlight, this makes the balloon stable and the solar panels that power the instrument efficient! The second reason is that the instrument does not have enough bandwidth to downlink all observation data. To retrieve the data we have to physically grab hard-drives from the payload. There is also lots of high value equipment that can be reused. The wind patterns that set up over Antarctica usually keep stratospheric balloons over land and so, whenever it is time to terminate, we can be sure that the payload will not sink at sea. I decided to bring my dad’s old Soviet film camera, the Zenith from 1972 and take a hand-full of pictures. Most turned out ok so here is a stroll through them: Mount Erebus from Lond Duration Ballooning (LDB) An ancient piece of equipment that I did not get to drive The church in town LDB after a small wind storm Scott’s hut from town View of the pressure ridges on our way to work Assembling Spider to get it launch ready takes a long time and lots of patience. Antarctica also does not have Amazon Prime which means that anything that breaks needs to be fixed with whatever you have on hand. When we did have a day off, and the weather was co-operating, we would do outdoorsy activities. At the start of the season the sea ice was thick enough to let people ski on it: Susan, Elle, and Steven in front of McMurdo Susan, Elle, and Steven up close Susan and Vy showing off the rented skis Vy adding a splash of color to the backdrop Susan celebrating the end of the hike Susan posing with the local wild-life At the end of December we were launch ready. We had about a week’s worth of launch attempts before we finally sent Spider on it’s way. Launching is heavily weather dependant and the weather would usually be best at 7am local time. To be ready to launch at 7am we would usually show up around midnight that morning. After a few hours of work to get everything ready, Spider would be taken out of the high-bay and would dangle majestically from the launch vehicle named “The Boss”. At this point we would sit around launching pie-balls (the small red weather balloons) to asses the weather until it was either good enough to launch or at around 10am when we would call it for the day and try again tomorrow. Spider hanging out on the Boss Spider sitting on the pad waiting for launch Seconds before launch Jared and Rose launching a weather balloon As always, most of the pictures I took were portraits!]]></summary></entry></feed>
