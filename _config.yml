@@ -22,11 +22,14 @@ title: Simon's Blog!
 author: Simon Tartakovsky
 # email: your-email@example.com
 description: >- # this means to ignore newlines until "baseurl:"
-  Some combination of things I find interesting and techincal ramblings. Sometimes not mutually exclusive :)
+  Some combination of things I find interesting and technical ramblings. Sometimes not mutually exclusive :)
 baseurl: "/blog" # the subpath of your site, e.g. /blog
 url: "https://merny93.github.io" # the base hostname & protocol for your site, e.g. http://example.com
 # twitter_username: jekyllrb
 # github_username:  jekyll
+show_excerpts: true
+excerpt_separator: "<!--more-->"  #global excerpt separator for the blog posts
+
 
 default_img: "/assets/img/question.png"
 

@@ -3,10 +3,11 @@ layout: post
 title:  "Hacking a Typewriter"
 date:   "2023-02-11"
 gallery_url: "https://photos.app.goo.gl/7uNdqAZitZZMHVu97"
+cover_photo_number: 7
 ---
 
 Ever wondered what the world would have looked like if large language models were invented before we invented monitors? Probably not but talking to chatGPT on a typewriter is cool regardless. A few weekends ago, Raffi and I hooked up a chatGPT backend to a hacked vintage typewriter: here is a quick demo video!
-
+<!--more-->
 <iframe width="100%" height="400px" src="https://www.youtube.com/embed/Ow0xPYktSg0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
 Getting to this point was a bit of a mission so lets go back to the start of the pandemic when I bought my first typewriter from the Quebec version of Craigslist as my first dumb Covid purchase. I had the idea to turn a typewriter into a printer and instead of doing any research I just went online and bought the first one which was within driving distance. It was advertised as "working 2 years ago, but lost power cable since. Sold as is". My first reaction was _power cable_???

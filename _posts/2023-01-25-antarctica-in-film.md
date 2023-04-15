@@ -3,10 +3,11 @@ layout: post
 title:  "Antarctica in Film"
 date:   "2023-01-25"
 gallery_url: "https://photos.app.goo.gl/8atZK6oSCLf4UKvP8"
+cover_photo_number: 0
 ---
 
 As most of my friends already know, I recently traveled to Antarctica for a few months to prepare and launch the Spider 2 instrument.
-
+<!--more-->
 [![Spider on the pad]({{page.image_urls[0]}})]({{page.gallery_url}})
 
 Spider 2 is a CMB polarimeter which flies on a stratospheric weather balloon at about 30km above the ground. It is designed to fly for around 30 days during which it scans a small portion of the sky that is specially designed to be _boring_. For Spider to achieve it's science goals it needs to be able to see the earliest light in the universe and thus the patch of sky to be scanned is selected to avoid our own galaxy and any other bright sources (notably the sun). 
