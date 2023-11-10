@@ -6,7 +6,7 @@ require 'net/http'
 module JekyllGooglePhotos
   class Generator < Jekyll::Generator
     def getImageLinks(url)
-      doc = Nokogiri::HTML(open(url.strip).read)
+      doc = Nokogiri::HTML(URI.open(url.strip).read) #this was switched from open(URL) to URI.open(URL) in ruby 3.0
       scripts = doc.xpath("//script")
       jsonString = ""
       for x in scripts do
